@@ -4,11 +4,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Camden Cyclists Current Quick Win Requests</title>
+    <title>Sheet-to-Map</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.9.1/mapbox-gl.css" rel="stylesheet" />
     <script src='https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js'></script>
     <link rel="stylesheet" href="style.css">
 
@@ -20,7 +20,6 @@
       padding: 0;
     }
 
-
     #map {
       border-left: 1px solid #fff;
       position: absolute;
@@ -29,29 +28,28 @@
       bottom: 0;
     }
 
-
     .mapboxgl-popup {
       padding-bottom: 5px;
     }
 
     .mapboxgl-popup-close-button {
-      display: none;
+//      display: none;
     }
 
     .mapboxgl-popup-content {
-      font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
-      padding: 0;
+      font: 400 14px/20px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+      padding: 10px;
       width: 250px;
     }
 
     .mapboxgl-popup-content-wrapper {
-      padding: 1%;
+      padding: 10%;
     }
 
     .mapboxgl-popup-content h3 {
-      background: rgb(61, 59, 59);
+ //   background: rgb(61, 59, 59);
       text-align: center;
-      color: #fff;
+	  color: blue;
       margin: 0;
       display: block;
       padding: 15px;
@@ -62,11 +60,16 @@
     .mapboxgl-popup-content h4 {
       margin: 0;
       display: block;
-      padding: 10px 3px 10px 10px;
-      font-weight: 400;
     }
 
-    .mapboxgl-container {
+    .mapboxgl-popup-content h5 {
+      margin: 0;
+      display: block;
+      font-weight: normal;
+      font-style: oblique;
+    }
+
+    .mapboxgl-popup-container {
       cursor: pointer;
     }
 
@@ -100,27 +103,57 @@
       var map = new mapboxgl.Map({
         container: 'map', // container id
         style: "mapbox://styles/mapbox/streets-v11", //YOUR TURN: choose a style: https://docs.mapbox.com/api/maps/#styles
-        center: [-0.14, 51.55], // starting position [lng, lat]
-        zoom: 14, // starting zoom
+        center: [-0.14, 51.53], // starting position [lng, lat]
+        zoom: 13, // starting zoom
         transformRequest: transformRequest
       });
 
 
       map.on("load", function() {
         init();
+		map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+		map.addControl(new mapboxgl.GeolocateControl());
       });
 
-      // Initialize Tabletop to access your table
+      // Get the URL parameters amd initialize Tabletop to access your table
       function init() {
+      
         Tabletop.init({
-          // YOUR TURN: change 'key' value to point to your spreadsheet
+          // 'key' is a Google Sheet sharing URL for a 'published on the web' sheet 
           key: 'https://docs.google.com/spreadsheets/d/1HvqP8O6oZFB8s70obKc9M_ksk-QcYKF6kxxcmqJ9HUg/edit?usp=sharing',
           // once Tabletop has loaded the data, it passes it to the 'callback' function, 'addPoints', defined below
           callback: addPoints,
           simpleSheet: true
-        });
+        });		
       }
+      
+	function urlParam(name){
+	// get a named parameter from the URL string
+		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		if (results==null){
+		   return null;
+		}
+		else{
+		   return decodeURIComponent(results[1]) || 0;
+		}
+	}
 
+      function getLngLat(row) {
+			if(row.Latitude && row.Longitude) {
+				return [row.Longitude, row.Latitude];
+			} else if(row.StreetView && row.StreetView.indexOf('@') > 0) {
+				return extractStreetViewLocation(row.StreetView);
+			} else {
+				return null;
+      	}
+      	
+      function extractStreetViewLocation(googleURL) {
+      		var s = googleURL.slice(googleURL.indexOf('@')+1);
+      		var parts = s.split(',');
+
+	 		return [parts[1],parts[0]];
+      	}
+      }
 
       // create a function called addPoints that iterates through your table (row by row) to create markers and popups
       function addPoints(data) {
@@ -128,20 +161,23 @@
         // iterate through your table to set the marker to lat/long values for each row
 
         data.forEach(function(row) {
-
-          // create a variable for your popup and populate your popup with information from your table
-          var popup = new mapboxgl.Popup()
-            .setHTML(`<h3>` + row.Reference + `</h3>` + '<h4>' + '<b>' + 'Location: ' + '</b>' + row.Location + '</h4>' + '<h4>' + '<b>' + 'Category: ' + '</b>' + row.Category + '</h4>'); // use the table to populate your popup with text
-
-
-          // create a variable for your markup and add it to the map 
-          var marker = new mapboxgl.Marker({
-              color: 'purple'
-            })
-            .setLngLat([row.Longitude, row.Latitude])
-            .setPopup(popup)
-            .addTo(map); // add the marker to the map
-
+			var lngLat = getLngLat(row);
+			
+			if(lngLat) { 
+			  // create a variable for your popup and populate your popup with information from your table
+			  var popup = new mapboxgl.Popup()
+				.setHTML('<h3>' + row.Location +': ' + row.Category + '</h3>' + '<h4>' + '<b>' + 'Location: ' + '</b>' + row.Location + '</h4>' + '<h4>' + '<b>' + 'Proposer: ' + '</b>' + row.Proposer + '</h4>' +
+				'<p>' + row.Description + '</p>' + '<h5>' + '<b>' + 'Reference: ' + '</b>' + row.Reference + '</h5>'); 
+					
+			  // create a variable for your markup and add it to the map 
+			  var marker = new mapboxgl.Marker({
+				  cursor: 'crosshairs', // doesn't work
+				  color: 'green',
+				})
+				.setLngLat(lngLat)
+				.setPopup(popup)
+				.addTo(map); // add the marker to the map
+			}
 
         });
       }

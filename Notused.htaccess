@@ -1,0 +1,4 @@
+SetEnvIf Origin "http(s)?://(www\.)?(docs.google.com | google.com)$" AccessControlAllowOrigin=$0$1
+Header set Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+Header set Access-Control-Allow-Credentials true
+
