@@ -10,9 +10,11 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v1.9.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.9.1/mapbox-gl.css" rel="stylesheet" />
     <script src='https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js'></script>
-    <link rel="stylesheet" href="style.css">
+//	<link rel="stylesheet" href="style.css">
 
-  </head>
+
+ </head>
+ 
   <style>
     body {
       background: #404040;
@@ -84,6 +86,7 @@
   </style>
 
   <body>
+    <script src='./utilities.js'></script>
 
     <div id="map"></div>
     <script>
@@ -103,8 +106,8 @@
       var map = new mapboxgl.Map({
         container: 'map', // container id
         style: "mapbox://styles/mapbox/streets-v11", //YOUR TURN: choose a style: https://docs.mapbox.com/api/maps/#styles
-        center: [-0.14, 51.53], // starting position [lng, lat]
-        zoom: 13, // starting zoom
+        center: MapInitialCenter,
+        zoom: MapInitialZoom,
         transformRequest: transformRequest
       });
 
@@ -117,43 +120,16 @@
 
       // Get the URL parameters amd initialize Tabletop to access your table
       function init() {
-      
+      	getURLParams();
         Tabletop.init({
           // 'key' is a Google Sheet sharing URL for a 'published on the web' sheet 
-          key: 'https://docs.google.com/spreadsheets/d/1HvqP8O6oZFB8s70obKc9M_ksk-QcYKF6kxxcmqJ9HUg/edit?usp=sharing',
+          key: SheetUrl,
           // once Tabletop has loaded the data, it passes it to the 'callback' function, 'addPoints', defined below
           callback: addPoints,
           simpleSheet: true
         });		
       }
       
-	function urlParam(name){
-	// get a named parameter from the URL string
-		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-		if (results==null){
-		   return null;
-		}
-		else{
-		   return decodeURIComponent(results[1]) || 0;
-		}
-	}
-
-      function getLngLat(row) {
-			if(row.Latitude && row.Longitude) {
-				return [row.Longitude, row.Latitude];
-			} else if(row.StreetView && row.StreetView.indexOf('@') > 0) {
-				return extractStreetViewLocation(row.StreetView);
-			} else {
-				return null;
-      	}
-      	
-      function extractStreetViewLocation(googleURL) {
-      		var s = googleURL.slice(googleURL.indexOf('@')+1);
-      		var parts = s.split(',');
-
-	 		return [parts[1],parts[0]];
-      	}
-      }
 
       // create a function called addPoints that iterates through your table (row by row) to create markers and popups
       function addPoints(data) {
@@ -161,18 +137,21 @@
         // iterate through your table to set the marker to lat/long values for each row
 
         data.forEach(function(row) {
+// console.log(row);					
 			var lngLat = getLngLat(row);
+			var popUpContent = '<h3>' + row.Title + '</h3><h4><b>' + 'Location: ' + '</b>' + row.Location + '</h4>' +
+			'<p>' + row.Description + '</p>' + '<h5>' + '<b>' + 'Photos: ' + '</b>' + row.Photos + '</h5>' +
+			'<a target=_blank href="' + row.StreetView + '">Street View</a>';
 			
 			if(lngLat) { 
 			  // create a variable for your popup and populate your popup with information from your table
 			  var popup = new mapboxgl.Popup()
-				.setHTML('<h3>' + row.Location +': ' + row.Category + '</h3>' + '<h4>' + '<b>' + 'Location: ' + '</b>' + row.Location + '</h4>' + '<h4>' + '<b>' + 'Proposer: ' + '</b>' + row.Proposer + '</h4>' +
-				'<p>' + row.Description + '</p>' + '<h5>' + '<b>' + 'Reference: ' + '</b>' + row.Reference + '</h5>'); 
-					
+				.setHTML(popUpContent); 
+// console.log(popUpContent);					
 			  // create a variable for your markup and add it to the map 
 			  var marker = new mapboxgl.Marker({
 				  cursor: 'crosshairs', // doesn't work
-				  color: 'green',
+				  color: categoryToColor(row.Category),
 				})
 				.setLngLat(lngLat)
 				.setPopup(popup)
