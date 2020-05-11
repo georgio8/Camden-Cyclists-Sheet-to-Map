@@ -1,3 +1,10 @@
+<!-- 
+	Index.html
+	Camden Cyclists Sheet-to-Map  
+	Author: George Coulouris <george@coulouris.net>
+	Beta release 21 May 2020
+ -->
+
 <!DOCTYPE html>
 <html>
 
@@ -7,161 +14,204 @@
     <title>Sheet-to-Map</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v1.9.1/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v1.9.1/mapbox-gl.css" rel="stylesheet" />
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js'></script>
-//	<link rel="stylesheet" href="style.css">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.css" rel="stylesheet" />
+	<script 
+	src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+	<link rel="stylesheet" 
+		href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css"
+		type="text/css" />
 
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js'></script>
+    <script type="text/javascript"
+    	src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.1.0/papaparse.min.js"></script>
 
+    <script src='./Camden Boundary.js'></script>
+    <script src='./utilities.js'></script>
+	<link rel="stylesheet" href="style.css">
  </head>
  
-  <style>
-    body {
-      background: #404040;
-      margin: 0;
-      padding: 0;
-    }
+<body>
 
-    #map {
-      border-left: 1px solid #fff;
-      position: absolute;
-      width: 100%;
-      top: 0;
-      bottom: 0;
-    }
+<div id="map" />
+<script>
+/*
+  var transformRequest = (url, resourceType) => {
+	var isMapboxRequest =
+	  url.slice(8, 22) === "api.mapbox.com" ||
+	  url.slice(10, 26) === "tiles.mapbox.com";
+	return {
+	  url: isMapboxRequest
+		? url.replace("?", "?pluginName=sheetMapper&")
+		: url
+	};
+  };
+*/
 
-    .mapboxgl-popup {
-      padding-bottom: 5px;
-    }
+  // Mapbox access token 
+  mapboxgl.accessToken = config.MapboxAccessToken;
+  var map = new mapboxgl.Map({
+	container: 'map', // container id
+	style: "mapbox://styles/mapbox/streets-v11", // choose a style: https://docs.mapbox.com/api/maps/#styles
+	center: config.MapInitialCentre, // NB. this and the zoom level will be changed automatically by map.fitBounds to include all markers
+	zoom: config.MapInitialZoom,
+//        transformRequest: transformRequest
 
-    .mapboxgl-popup-close-button {
-//      display: none;
-    }
+  });
+    
+const SearchBox = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl}); 
 
-    .mapboxgl-popup-content {
-      font: 400 14px/20px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
-      padding: 10px;
-      width: 250px;
-    }
+  map.on("load", function() {
+  	var attributions = document.getElementsByClassName('mapboxgl-ctrl-attrib-inner');	
+	attributions[0].innerHTML = AttributionString;
 
-    .mapboxgl-popup-content-wrapper {
-      padding: 10%;
-    }
+	init();
+	map.addControl( SearchBox, 'top-right');
+	map.addControl(new mapboxgl.NavigationControl({'showCompass': false}, 'top-right'));
+//	map.addControl(new mapboxgl.GeolocateControl());
 
-    .mapboxgl-popup-content h3 {
- //   background: rgb(61, 59, 59);
-      text-align: center;
-	  color: blue;
-      margin: 0;
-      display: block;
-      padding: 15px;
-      font-weight: 700;
-      margin-top: -5px;
-    }
+/*
+	map.addSource('AdminBoundaries', {
+		'type': 'raster',
+		'tiles': [
+			adminBoundariesUrl
+		],
+		'tileSize': 256
+	});
+	map.addLayer({
+		'id': 'AdminBoundaries',
+		'type': 'raster',
+		'source': 'AdminBoundaries'
+	});
+*/
 
-    .mapboxgl-popup-content h4 {
-      margin: 0;
-      display: block;
-    }
+// add borough boundary
+	if(config.ShowBoundary == "Camden") {
+		map.addSource('CamdenBoundary', {
+			'type': 'geojson',
+			'data': CamdenBoundary,
+		});
+		map.addLayer({
+			'id': 'boundary',
+			'type': 'line',
+			'source': 'CamdenBoundary',
+			'layout': {
+				'line-join': 'round',
+				'line-cap': 'round'
+			},
+			'paint': {
+				'line-color': '#888',
+				'line-width': 4
+			}
+		});
+	}
 
-    .mapboxgl-popup-content h5 {
-      margin: 0;
-      display: block;
-      font-weight: normal;
-      font-style: oblique;
-    }
+  });
+  
+  // Get the URL parameters and initialize Papa.parse to access data from CSV table
+  // Previous version using Tabletop.js didn't use CSV, was rendered useless by Google's strict security (OAuth)
+  function init() {
+	getUrlConfig();
+	Papa.parse(config.SheetUrl + '?output=csv', {
+		download: true,
+		comment: "//",
+		header: true,
+		complete: function(results) {
+			var data = results.data
+			addPoints(data);
+	  }
+	})
+  }
 
-    .mapboxgl-popup-container {
-      cursor: pointer;
-    }
+	// converts a sequence of URLs separated by whitespace into an HTML expression with clickable links 
+  function generateLinks(label, value) {
+	var result = "";
+	links = value.trim().split(/\s/);
+	if (links.length > 0) {
+		var i = 1;
+		result += '<p>';
+		links.forEach(function(link) {
+			result += 
+				'<a target="_blank" href="' + link + '">' + label + 
+					(links.length > 1 ? ('–' + i++) : "") + '</a>  ';
+		})
+		result += '</p>\n';
+	}
+	return result;
+  }
 
-    .mapboxgl-popup-anchor-top>.mapboxgl-popup-content {
-      margin-top: 3px;
-    }
+  // create a function called addPoints that iterates through your table (row by row) to create markers and popups
+  function addPoints(data) {
+	// iterate through your table to set the marker to lat/long values for each row
+	var points = [];
+	var mapBounds = new mapboxgl.LngLatBounds();
 
-    .mapboxgl-popup-anchor-top>.mapboxgl-popup-tip {
-      border-bottom-color: rgb(61, 59, 59);
-    }
-
-  </style>
-
-  <body>
-    <script src='./utilities.js'></script>
-
-    <div id="map"></div>
-    <script>
-      var transformRequest = (url, resourceType) => {
-        var isMapboxRequest =
-          url.slice(8, 22) === "api.mapbox.com" ||
-          url.slice(10, 26) === "tiles.mapbox.com";
-        return {
-          url: isMapboxRequest
-            ? url.replace("?", "?pluginName=sheetMapper&")
-            : url
-        };
-      };
-
-      //YOUR TURN: add your Mapbox access token 
-      mapboxgl.accessToken = 'pk.eyJ1IjoiZ2VvcmdpbzgiLCJhIjoiY2loN2dtMmZ5MDAxbnZzbTNrZ2w5aWY4dCJ9.RJxJPq-II9GbDaTKy1xhkg';
-      var map = new mapboxgl.Map({
-        container: 'map', // container id
-        style: "mapbox://styles/mapbox/streets-v11", //YOUR TURN: choose a style: https://docs.mapbox.com/api/maps/#styles
-        center: MapInitialCenter,
-        zoom: MapInitialZoom,
-        transformRequest: transformRequest
-      });
-
-
-      map.on("load", function() {
-        init();
-		map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-		map.addControl(new mapboxgl.GeolocateControl());
-      });
-
-      // Get the URL parameters amd initialize Tabletop to access your table
-      function init() {
-      	getURLParams();
-        Tabletop.init({
-          // 'key' is a Google Sheet sharing URL for a 'published on the web' sheet 
-          key: SheetUrl,
-          // once Tabletop has loaded the data, it passes it to the 'callback' function, 'addPoints', defined below
-          callback: addPoints,
-          simpleSheet: true
-        });		
-      }
-      
-
-      // create a function called addPoints that iterates through your table (row by row) to create markers and popups
-      function addPoints(data) {
-
-        // iterate through your table to set the marker to lat/long values for each row
-
-        data.forEach(function(row) {
-// console.log(row);					
-			var lngLat = getLngLat(row);
-			var popUpContent = '<h3>' + row.Title + '</h3><h4><b>' + 'Location: ' + '</b>' + row.Location + '</h4>' +
-			'<p>' + row.Description + '</p>' + '<h5>' + '<b>' + 'Photos: ' + '</b>' + row.Photos + '</h5>' +
-			'<a target=_blank href="' + row.StreetView + '">Street View</a>';
+	data.forEach(function(row) {
+		var popupContent = "", rolloverContent = "", addedContent, type, label, nShown = 0;
+		config.FieldsToShow.forEach(function(item) {
+			if(row[item] != null && row[item]  != "") {
+// console.log (item + ':' + row[item]);
+				type = config.FieldStyles[item];
+				label = config.FieldsWithLabel.indexOf(item) < 0 ? "" : item + ': ';
+				if(row[item]) switch(type) { //more cases are expected:
+					case 'links':
+						addedContent = label + generateLinks(item, row[item]);
+						break;
+					default: // textual field
+						addedContent = '<' + type +'>' + label + row[item] + '</' + type + '>\n';
+				}
+				popupContent += addedContent;
+				if(nShown++ < config.NoOfRolloverFields) rolloverContent += addedContent;
+			}
+		})
+		var lngLat = getLngLat(row);
+		if(lngLat) {
+			mapBounds.extend(lngLat);
 			
-			if(lngLat) { 
-			  // create a variable for your popup and populate your popup with information from your table
-			  var popup = new mapboxgl.Popup()
-				.setHTML(popUpContent); 
-// console.log(popUpContent);					
-			  // create a variable for your markup and add it to the map 
-			  var marker = new mapboxgl.Marker({
-				  cursor: 'crosshairs', // doesn't work
-				  color: categoryToColor(row.Category),
-				})
+		  // create a variable for the popup and populate with information from GSheet
+		  var popup = new mapboxgl.Popup()
+			.setHTML(popupContent); 
+		  var rollover = new mapboxgl.Popup({offset: 30, className: "rollover"})
+			.setLngLat(lngLat)
+			.setHTML(rolloverContent); 
+
+
+		
+		  // create a variable for your markup and add it to the map 
+		  var marker = new mapboxgl.Marker({
+//			  cursor: 'pointer', // doesn't work
+//			  element: "<div class='marker' style=\"backgroundImage:'./icons/redTick.png'\"></div>",
+			  color: categoryToColor(row.Category)
+			})
+			.setLngLat(lngLat)
+			.setPopup(popup)
+			.addTo(map); // add the marker to the map
+			var element = marker.getElement();
+			element.style.cursor = 'pointer';
+			element.addEventListener('mouseenter', () => {if(!popup.isOpen()) rollover.addTo(map)});
+			element.addEventListener('mouseleave', () => rollover.remove());
+			
+			if(row.Status == 'COMPLETED') {
+				var el = document.createElement('div');
+				el.className = 'marker';
+				el.style.cursor = 'pointer';
+				el.anchor = 'bottom';
+				el.innerHTML = '<img src="./icons/blackTick.svg" width=20px/>';
+				var mTick = new mapboxgl.Marker(el)
 				.setLngLat(lngLat)
 				.setPopup(popup)
 				.addTo(map); // add the marker to the map
-			}
+				el.addEventListener('mouseenter', () => {if(!popup.isOpen()) rollover.addTo(map)});
+				el.addEventListener('mouseleave', () => rollover.remove());
+		}
 
-        });
-      }
+		}
 
-    </script>
-  </body>
+	});
+	map.fitBounds(mapBounds, { padding: {top: 40, bottom:40, left: 15, right: 15}});
+  }
+
+</script>
+</body>
 
 </html>

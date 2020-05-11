@@ -1,1 +1,82 @@
+/*
+	Style.css
+	Camden Cyclists Sheet-to-Map  
+	Author: George Coulouris <george@coulouris.net>
+	Beta release 21 May 2020
+*/
+
+
+  <style>
+    body {
+      background: #404040;
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      border-left: 1px solid #fff;
+      position: absolute;
+      width: 100%;
+      top: 0;
+      bottom: 0;
+    }
+
+    .mapboxgl-popup {
+      padding-bottom: 5px;
+    }
+
+    .rollover {
+      opacity: 0.60;
+    }
+
+    .mapboxgl-popup-close-button {
+//      display: none;
+    }
+
+    .mapboxgl-popup-content {
+      font: 400 14px/20px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+      padding: 10px;
+      width: 250px;
+    }
+
+    .mapboxgl-popup-content-wrapper {
+      padding: 10%;
+    }
+
+    .mapboxgl-popup-content h3 {
+//	  background: rgb(61, 59, 59);
+      text-align: center;
+	  color: blue;
+      margin: 0;
+      display: block;
+      padding: 15px;
+      font-weight: 700;
+      margin-top: -5px;
+    }
+
+    .mapboxgl-popup-content h4 {
+      margin: 0;
+      display: block;
+    }
+
+    .mapboxgl-popup-content h5 {
+      margin: 0;
+      display: block;
+      font-weight: normal;
+      font-style: oblique;
+    }
+
+    .mapboxgl-popup-container {
+      cursor: pointer;
+    }
+
+    .mapboxgl-popup-anchor-top>.mapboxgl-popup-content {
+      margin-top: 3px;
+    }
+
+    .mapboxgl-popup-anchor-top>.mapboxgl-popup-tip {
+      border-bottom-color: rgb(61, 59, 59);
+    }
+  </style>
+
 
