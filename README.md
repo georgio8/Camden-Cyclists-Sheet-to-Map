@@ -2,11 +2,7 @@
 
 Developed from a Mapbox Sheet-to-Map demo.
 
-
+See Sheet-to-Map Documentation Release3 14-5-2020.pdf for full documentation.
 
 First deployment here:
 http://camdencyclists.org.uk/suggested-covid-19-highway-interventions/
-
-It would be great to get a degree of integration with this much higher-level
-tool: https://github.com/cyipt/tempCycleways  E.g. use it to generate rows for a
-GSheet
