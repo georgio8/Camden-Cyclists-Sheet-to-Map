@@ -5,5 +5,5 @@ See Sheet-to-Map Documentation Release3 2014-5-2020.pdf in the Repository for fu
 First deployment here:
 http://camdencyclists.org.uk/suggested-covid-19-highway-interventions/
 
-It can be run with your own data and configuration here: https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/ or here :https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/ as described in the documentation.
+It can be run with your own data and configuration here: https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/ or here: https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/ as described in the documentation.
 
