@@ -6,3 +6,6 @@ See Sheet-to-Map Documentation Release3 14-5-2020.pdf for full documentation.
 
 First deployment here:
 http://camdencyclists.org.uk/suggested-covid-19-highway-interventions/
+
+Test it with your own Google Sheet here: https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/
+
