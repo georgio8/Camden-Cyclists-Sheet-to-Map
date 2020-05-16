@@ -1,12 +1,9 @@
-**Tool for generating an interactive map from a Google Sheet**
+**Web App for generating an interactive map from a Google Sheet**
 
-Developed from a Mapbox Sheet-to-Map demo.
-
-
+See Sheet-to-Map Documentation Release3 2014-5-2020.pdf in the Repository for full documentation.
 
 First deployment here:
 http://camdencyclists.org.uk/suggested-covid-19-highway-interventions/
 
-It would be great to get a degree of integration with this much higher-level
-tool: https://github.com/cyipt/tempCycleways  E.g. use it to generate rows for a
-GSheet
+It can be run with your own data and configuration here: https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/ or here :https://georgio8.github.io/Camden-Cyclists-Sheet-to-Map/ as described in the documentation.
+
