@@ -115,6 +115,7 @@ const SearchBox = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapbox
 	Papa.parse(config.SheetUrl + '?output=csv', {
 		download: true,
 		comment: "//",
+		skipEmptyLines: 'greedy',
 		header: true,
 		complete: function(results) {
 			var data = results.data
@@ -150,7 +151,6 @@ const SearchBox = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapbox
 		var popupContent = "", rolloverContent = "", addedContent, type, label, nShown = 0;
 		config.FieldsToShow.forEach(function(item) {
 			if(row[item] != null && row[item]  != "") {
-// console.log (item + ':' + row[item]);
 				type = config.FieldStyles[item];
 				label = config.FieldsWithLabel.indexOf(item) < 0 ? "" : item + ': ';
 				if(row[item]) switch(type) { //more cases are expected:
@@ -174,8 +174,6 @@ const SearchBox = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapbox
 		  var rollover = new mapboxgl.Popup({offset: 30, className: "rollover"})
 			.setLngLat(lngLat)
 			.setHTML(rolloverContent); 
-
-
 		
 		  // create a variable for your markup and add it to the map 
 		  var marker = new mapboxgl.Marker({
@@ -191,7 +189,7 @@ const SearchBox = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapbox
 			element.addEventListener('mouseenter', () => {if(!popup.isOpen()) rollover.addTo(map)});
 			element.addEventListener('mouseleave', () => rollover.remove());
 			
-			if(row.Status == 'COMPLETED') {
+			if(row.Status && row.Status == 'COMPLETED') {
 				var el = document.createElement('div');
 				el.className = 'marker';
 				el.style.cursor = 'pointer';
@@ -203,13 +201,23 @@ const SearchBox = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapbox
 				.addTo(map); // add the marker to the map
 				el.addEventListener('mouseenter', () => {if(!popup.isOpen()) rollover.addTo(map)});
 				el.addEventListener('mouseleave', () => rollover.remove());
-		}
+			}
 
 		}
 
 	});
-	map.fitBounds(mapBounds, { padding: {top: 40, bottom:40, left: 15, right: 15}});
+	map.fitBounds(mapBounds, { padding: {top: 40, bottom:40, left: 40, right: 40}});
   }
+  
+/* Not yet complete
+  function markerOverlay(row) {
+  	var result = false;
+  	MarkerOverlayConditions.forEach(function(condition) {
+  		if(condition.
+  	})
+  }
+
+*/
 
 </script>
 </body>

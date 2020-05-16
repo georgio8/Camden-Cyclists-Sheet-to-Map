@@ -10,17 +10,10 @@
 
 const LatColumnName = "Latitude", LngColumnName = "Longitude", SVColumnName = "StreetView";
 
-//	Covid19 issues
-//	const SheetUrl =  'https://docs.google.com/spreadsheets/d/1B6Sj6RaSF1Hf43ESlnVxNdO1HXuwPNcxU7tSlxqqFig/pub';
-
 // The google sheet we are using for testing only.
 const SheetUrlTest = 'https://docs.google.com/spreadsheets/d/1YIOymcV2MAyyUjZf4CcftHZDfN4illUmdW5EQxzPA4M/pub';
 
-const SheetUrlTestV3 = 'https://docs.google.com/spreadsheets/d/1opi9r3TV3hLZwM4yYeUfyWnFDfMAvqjuG5jI_sv1KvM/pub';
-
-// Ready for 2nd release:
-const SheetUrl_v3 = 'https://docs.google.com/spreadsheets/d/1xqajoHc3Dj8QZp8BNnEk2TVwzcIzMppos_nthlOtOck/pub';
-
+// Ready for release:
 const Covid_19_measures_3 = 'https://docs.google.com/spreadsheets/d/1KWGAJTW3A6HsluAysJKVS-gAgZf7upKBGZLIthW1B0Y/pub';
 
  /* pixel tiles, probably incompatible with MB vector maps: */
@@ -50,7 +43,8 @@ var config = {
 		"StreetView": "links", "Status": "p"},
 	'FieldsWithLabel' : [ "Location", "Status"],
 	'NoOfRolloverFields' : 2,	// include the first n fields from FieldsToShow in rollover boxes
-	'CategoriesToColours' : {"Shops": "red", "Filter": "green", "MainRoad": "orange"},
+	'CategoriesToColours' : {"Shops": "red", "Filter": "green", "MainRoad": "orange", "Schools": "blue"},
+	'MarkerOverlayConditions' : {'Status': 'COMPLETED'},	// not yet observed
 	'ShowBoundary' : ''
 }
 
@@ -58,13 +52,16 @@ function getUrlConfig() { // could be dome dynamically with config.foreach(item)
 	var param;
 	if(param = urlParam('MapboxAccessToken')) config.MapboxAccessToken = param;
 	if(param = urlParam('SheetUrl')) config.SheetUrl = param;
+// for users who aren't aware of this requirement:
+	if(config.SheetUrl.substr(config.SheetUrl.length - 4) !== '/pub') config.SheetUrl += '/pub';
 	if(param = urlParam('MapInitialCentre')) config.MapInitialCentre = param;
 	if(param = urlParam('MapInitialZoom')) config.MapInitialZoom = param;
-	if(param = urlParam('FieldsToShow')) config.FieldsToShow = param;
-	if(param = urlParam('FieldStyles')) config.FieldStyles = param;
-	if(param = urlParam('FieldsWithLabel')) config.FieldsWithLabel = param;
+	if(param = urlParam('FieldsToShow')) config.FieldsToShow = eval('[' + param + ']');
+	if(param = urlParam('FieldStyles')) config.FieldStyles = eval('({' + param + '})');
+	if(param = urlParam('FieldsWithLabel')) config.FieldsWithLabel = eval('[' + param + ']');
 	if(param = urlParam('NoOfRolloverFields')) config.NoOfRolloverFields = param;
-	if(param = urlParam('CategoriesToColours')) config.CategoriesToColours = param;
+	if(param = urlParam('CategoriesToColours')) config.CategoriesToColours = eval('({' + param + '})');
+	if(param = urlParam('MarkerOverlayConditions')) config.MarkerOverlayConditions = param; // not yet implemented
 	if(param = urlParam('ShowBoundary')) config.ShowBoundary = param;
 }
 
